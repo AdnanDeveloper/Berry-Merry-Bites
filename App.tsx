@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import Snowfall from './components/Snowfall';
 import SantaChat from './components/SantaChat';
-import { Product, CartItem, Page } from './types';
+import { Product, CartItem, Page, Order } from './types';
 import { PRODUCTS } from './constants';
 
 interface Floater {
@@ -15,7 +15,26 @@ interface Floater {
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [floaters, setFloaters] = useState<Floater[]>([]);
+
+  // Initialize orders from localStorage
+  useEffect(() => {
+    const savedOrders = localStorage.getItem('berry_merry_orders');
+    if (savedOrders) {
+      setOrders(JSON.parse(savedOrders));
+    }
+
+    // Real-time listener for cross-tab updates
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'berry_merry_orders' && e.newValue) {
+        setOrders(JSON.parse(e.newValue));
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const addToCart = (product: Product, e?: React.MouseEvent) => {
     setCart(prev => {
@@ -59,14 +78,27 @@ const App: React.FC = () => {
   const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const handleCheckout = () => {
-    if (cart.length === 0) return;
-    completeOrder();
-  };
-
   const completeOrder = () => {
+    const newOrder: Order = {
+      id: `ORD-${Date.now()}`,
+      timestamp: new Date().toLocaleString(),
+      items: [...cart],
+      totalPoints: cartTotal
+    };
+
+    const updatedOrders = [newOrder, ...orders];
+    setOrders(updatedOrders);
+    localStorage.setItem('berry_merry_orders', JSON.stringify(updatedOrders));
+    
     setCart([]);
     setCurrentPage('success');
+  };
+
+  const clearAllData = () => {
+    if (confirm("Are you sure you want to clear all order history? This cannot be undone.")) {
+      setOrders([]);
+      localStorage.removeItem('berry_merry_orders');
+    }
   };
 
   const renderHome = () => (
@@ -81,7 +113,7 @@ const App: React.FC = () => {
 
       <section className="container mx-auto px-4 py-16">
         <h3 className="text-4xl font-christmas text-red-800 text-center mb-12 underline decoration-green-600 decoration-wavy underline-offset-8">Our Festive Collection</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-10 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-6xl mx-auto">
           {PRODUCTS.map(product => (
             <div key={product.id} className="bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all border border-red-100 group flex flex-col h-full">
               <div className="h-64 overflow-hidden relative">
@@ -109,16 +141,6 @@ const App: React.FC = () => {
               </div>
             </div>
           ))}
-        </div>
-      </section>
-
-      <section className="bg-green-800 text-white py-16 mt-12 overflow-hidden relative">
-        <div className="container mx-auto px-4 text-center">
-            <div className="flex justify-center gap-8 text-4xl mb-4">
-                <span>🍪</span><span>🎮</span><span>🦌</span>
-            </div>
-            <h4 className="text-3xl font-christmas mb-4">Handcrafted with Holiday Joy</h4>
-            <p className="max-w-xl mx-auto opacity-90">Every bite and game is prepared with love and a sprinkle of Christmas magic to ensure your celebrations are berry merry!</p>
         </div>
       </section>
     </div>
@@ -165,7 +187,7 @@ const App: React.FC = () => {
               <span className="text-3xl font-bold text-red-800">{cartTotal} points</span>
             </div>
             <button 
-              onClick={handleCheckout}
+              onClick={completeOrder}
               className="w-full bg-red-600 text-white font-bold py-5 rounded-2xl text-xl hover:bg-red-700 transition-colors shadow-lg"
             >
               Confirm and Order 🦌
@@ -175,6 +197,89 @@ const App: React.FC = () => {
       )}
     </div>
   );
+
+  const renderAdmin = () => {
+    const totalPoints = orders.reduce((sum, order) => sum + order.totalPoints, 0);
+    const avgOrderValue = orders.length > 0 ? (totalPoints / orders.length).toFixed(1) : 0;
+
+    return (
+      <div className="container mx-auto px-4 py-12 max-w-6xl">
+        <div className="flex justify-between items-end mb-8">
+          <div>
+            <h2 className="text-4xl font-christmas text-red-800 mb-2">North Pole Command Center</h2>
+            <p className="text-slate-500">Real-time order tracking and point analytics.</p>
+          </div>
+          <button 
+            onClick={clearAllData}
+            className="bg-slate-200 text-slate-600 px-4 py-2 rounded-lg text-sm hover:bg-red-100 hover:text-red-600 transition-colors"
+          >
+            Reset Data
+          </button>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="bg-gradient-to-br from-red-600 to-red-800 p-8 rounded-3xl text-white shadow-xl shadow-red-200">
+            <p className="text-red-100 mb-2 uppercase tracking-wider text-sm font-bold">Total Points Earned</p>
+            <p className="text-5xl font-bold tracking-tighter">{totalPoints} <span className="text-2xl font-light">pts</span></p>
+          </div>
+          <div className="bg-white p-8 rounded-3xl border border-red-100 shadow-xl shadow-slate-100">
+            <p className="text-slate-400 mb-2 uppercase tracking-wider text-sm font-bold">Total Orders</p>
+            <p className="text-5xl font-bold text-green-700 tracking-tighter">{orders.length}</p>
+          </div>
+          <div className="bg-white p-8 rounded-3xl border border-red-100 shadow-xl shadow-slate-100">
+            <p className="text-slate-400 mb-2 uppercase tracking-wider text-sm font-bold">Avg Order Value</p>
+            <p className="text-5xl font-bold text-yellow-600 tracking-tighter">{avgOrderValue} <span className="text-2xl font-light">pts</span></p>
+          </div>
+        </div>
+
+        {/* Orders Table */}
+        <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-red-50">
+          <div className="p-6 border-b border-red-50 bg-red-50/50">
+            <h3 className="text-xl font-bold text-slate-800">Recent Transactions</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-slate-50 text-slate-500 text-sm uppercase">
+                  <th className="px-6 py-4">Order ID</th>
+                  <th className="px-6 py-4">Date & Time</th>
+                  <th className="px-6 py-4">Items</th>
+                  <th className="px-6 py-4 text-right">Points</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {orders.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-20 text-center text-slate-400">
+                      No orders have been placed yet. The elves are waiting!
+                    </td>
+                  </tr>
+                ) : (
+                  orders.map(order => (
+                    <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-6 py-4 font-mono text-sm text-red-600 font-bold">{order.id}</td>
+                      <td className="px-6 py-4 text-slate-600 text-sm">{order.timestamp}</td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-2">
+                          {order.items.map((item, idx) => (
+                            <span key={idx} className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-full border border-green-100">
+                              {item.quantity}x {item.name}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right font-bold text-slate-900">{order.totalPoints} pts</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderSuccess = () => (
     <div className="container mx-auto px-4 py-20 text-center animate-pop-in">
@@ -192,7 +297,7 @@ const App: React.FC = () => {
             </div>
             <button 
                 onClick={() => setCurrentPage('home')}
-                className="bg-red-600 text-white px-12 py-5 rounded-2xl font-bold hover:bg-red-700 transition-all text-xl shadow-xl shadow-red-200 active:scale-95"
+                className="bg-red-600 text-white px-12 py-5 rounded-2xl font-bold hover:bg-red-700 transition-all text-xl shadow-xl shadow-red-200"
             >
                 Back to Festive Shop 🎄
             </button>
@@ -223,6 +328,7 @@ const App: React.FC = () => {
         {currentPage === 'home' && renderHome()}
         {currentPage === 'cart' && renderCart()}
         {currentPage === 'success' && renderSuccess()}
+        {currentPage === 'admin' && renderAdmin()}
       </main>
 
       <footer className="bg-slate-900 text-slate-400 py-12 mt-12">
@@ -234,7 +340,7 @@ const App: React.FC = () => {
             <span className="text-xl">🍓</span>
             <span className="text-xl">🎮</span>
           </div>
-          <p className="text-sm">© 2024 North Pole Delivery Service. All treats and games are elf-tested and Santa-approved.</p>
+          <p className="text-sm">© 2024 North Pole Delivery Service. Real-time Christmas commerce.</p>
         </div>
       </footer>
     </div>
