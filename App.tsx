@@ -75,29 +75,31 @@ const App: React.FC = () => {
         <div className="absolute inset-0 bg-red-900/60"></div>
         <div className="relative z-10 px-4">
           <h2 className="text-5xl md:text-7xl font-christmas font-bold mb-4 drop-shadow-lg">Merry Christmas Treats</h2>
-          <p className="text-xl md:text-2xl font-light mb-8 max-w-2xl mx-auto">Discover the magic in every bite. Festive fusion flavors delivered to your doorstep.</p>
+          <p className="text-xl md:text-2xl font-light mb-8 max-w-2xl mx-auto">Discover the magic in every bite. Festive fusion flavors and games delivered to your doorstep.</p>
         </div>
       </section>
 
       <section className="container mx-auto px-4 py-16">
-        <h3 className="text-3xl font-christmas text-red-800 text-center mb-12">Our Signature Bites</h3>
-        <div className="grid md:grid-cols-2 gap-12 max-w-5xl mx-auto">
+        <h3 className="text-4xl font-christmas text-red-800 text-center mb-12 underline decoration-green-600 decoration-wavy underline-offset-8">Our Festive Collection</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-10 max-w-6xl mx-auto">
           {PRODUCTS.map(product => (
-            <div key={product.id} className="bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all border border-red-100 group">
+            <div key={product.id} className="bg-white rounded-3xl overflow-hidden shadow-xl hover:shadow-2xl transition-all border border-red-100 group flex flex-col h-full">
               <div className="h-64 overflow-hidden relative">
                 <img 
                   src={product.image} 
                   alt={product.name} 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
-                <div className="absolute top-4 right-4 bg-yellow-500 text-red-900 font-bold px-4 py-1 rounded-full shadow-md">
+                <div className="absolute top-4 right-4 bg-yellow-500 text-red-900 font-bold px-4 py-1 rounded-full shadow-md z-10">
                   {product.price} pts
                 </div>
               </div>
-              <div className="p-8">
-                <h4 className="text-2xl font-bold text-green-800 mb-2">{product.name}</h4>
-                <p className="text-slate-600 mb-4">{product.description}</p>
-                <SantaChat productName={product.name} />
+              <div className="p-8 flex flex-col flex-grow">
+                <div className="flex-grow">
+                  <h4 className="text-2xl font-bold text-green-800 mb-2">{product.name}</h4>
+                  <p className="text-slate-600 mb-4">{product.description}</p>
+                  <SantaChat productName={product.name} />
+                </div>
                 <button 
                   onClick={(e) => addToCart(product, e)}
                   className="w-full mt-6 bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-red-200"
@@ -113,10 +115,10 @@ const App: React.FC = () => {
       <section className="bg-green-800 text-white py-16 mt-12 overflow-hidden relative">
         <div className="container mx-auto px-4 text-center">
             <div className="flex justify-center gap-8 text-4xl mb-4">
-                <span>🍪</span><span>🥛</span><span>🦌</span>
+                <span>🍪</span><span>🎮</span><span>🦌</span>
             </div>
             <h4 className="text-3xl font-christmas mb-4">Handcrafted with Holiday Joy</h4>
-            <p className="max-w-xl mx-auto opacity-90">Every bite is prepared with fresh ingredients and a sprinkle of Christmas magic to ensure your celebrations are berry merry!</p>
+            <p className="max-w-xl mx-auto opacity-90">Every bite and game is prepared with love and a sprinkle of Christmas magic to ensure your celebrations are berry merry!</p>
         </div>
       </section>
     </div>
@@ -127,7 +129,7 @@ const App: React.FC = () => {
       <h2 className="text-4xl font-christmas text-red-800 mb-8 text-center">Your Gift Sack</h2>
       {cart.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-3xl shadow-inner border-2 border-dashed border-red-200">
-          <p className="text-xl text-slate-400 mb-6">Your sack is empty! Go find some treats.</p>
+          <p className="text-xl text-slate-400 mb-6">Your sack is empty! Go find some treats or games.</p>
           <button 
             onClick={() => setCurrentPage('home')}
             className="bg-green-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-green-700 transition-colors"
@@ -185,7 +187,7 @@ const App: React.FC = () => {
             </div>
             <h2 className="text-5xl font-christmas text-red-800 mb-6 font-bold tracking-tight">Ho Ho Ho! Order Received!</h2>
             <div className="space-y-4 mb-10">
-                <p className="text-2xl text-slate-700 font-semibold">Your festive treats are on the way!</p>
+                <p className="text-2xl text-slate-700 font-semibold">Your festive items are on the way!</p>
                 <p className="text-lg text-slate-500 italic">Santa's elves are packing your sack with extra magic and holiday cheer as we speak.</p>
             </div>
             <button 
@@ -230,9 +232,9 @@ const App: React.FC = () => {
             <span className="text-xl">🍪</span>
             <span className="text-xl">🥨</span>
             <span className="text-xl">🍓</span>
-            <span className="text-xl">🍫</span>
+            <span className="text-xl">🎮</span>
           </div>
-          <p className="text-sm">© 2024 North Pole Delivery Service. All treats are elf-tested and Santa-approved.</p>
+          <p className="text-sm">© 2024 North Pole Delivery Service. All treats and games are elf-tested and Santa-approved.</p>
         </div>
       </footer>
     </div>
