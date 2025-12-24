@@ -20,12 +20,18 @@ const Header: React.FC<HeaderProps> = ({ cartCount, onNavigate, currentPage }) =
           <h1 className="text-3xl font-christmas font-bold tracking-wider">Berry Merry Bites</h1>
         </div>
         
-        <nav className="flex items-center gap-6">
+        <nav className="flex items-center gap-4 md:gap-6">
           <button 
             onClick={() => onNavigate('home')}
-            className={`hover:text-yellow-400 transition-colors ${currentPage === 'home' ? 'text-yellow-400 font-bold' : ''}`}
+            className={`text-sm md:text-base hover:text-yellow-400 transition-colors ${currentPage === 'home' ? 'text-yellow-400 font-bold' : ''}`}
           >
             Home
+          </button>
+          <button 
+            onClick={() => onNavigate('admin')}
+            className={`text-sm md:text-base hover:text-yellow-400 transition-colors ${currentPage === 'admin' ? 'text-yellow-400 font-bold' : ''}`}
+          >
+            Admin
           </button>
           <button 
             onClick={() => onNavigate('cart')}
