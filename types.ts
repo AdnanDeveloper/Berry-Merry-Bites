@@ -11,4 +11,11 @@ export interface CartItem extends Product {
   quantity: number;
 }
 
-export type Page = 'home' | 'cart' | 'checkout' | 'success';
+export interface Order {
+  id: string;
+  timestamp: string;
+  items: CartItem[];
+  totalPoints: number;
+}
+
+export type Page = 'home' | 'cart' | 'checkout' | 'success' | 'admin';
