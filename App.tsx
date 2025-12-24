@@ -17,6 +17,7 @@ const App: React.FC = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [floaters, setFloaters] = useState<Floater[]>([]);
+  const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
 
   // Initialize orders from localStorage
   useEffect(() => {
@@ -25,7 +26,12 @@ const App: React.FC = () => {
       setOrders(JSON.parse(savedOrders));
     }
 
-    // Real-time listener for cross-tab updates
+    const savedAdmin = localStorage.getItem('berry_merry_admin_unlocked');
+    if (savedAdmin === 'true') {
+      setIsAdminUnlocked(true);
+    }
+
+    // Real-time listener for cross-tab updates (Single Device)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'berry_merry_orders' && e.newValue) {
         setOrders(JSON.parse(e.newValue));
@@ -35,6 +41,15 @@ const App: React.FC = () => {
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
+
+  const handleSecretUnlock = () => {
+    const newState = !isAdminUnlocked;
+    setIsAdminUnlocked(newState);
+    localStorage.setItem('berry_merry_admin_unlocked', String(newState));
+    if (newState) {
+      alert("🎅 Ho Ho Ho! Welcome to the North Pole Command Center.");
+    }
+  };
 
   const addToCart = (product: Product, e?: React.MouseEvent) => {
     setCart(prev => {
@@ -80,7 +95,7 @@ const App: React.FC = () => {
 
   const completeOrder = () => {
     const newOrder: Order = {
-      id: `ORD-${Date.now()}`,
+      id: `ORD-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
       timestamp: new Date().toLocaleString(),
       items: [...cart],
       totalPoints: cartTotal
@@ -92,6 +107,38 @@ const App: React.FC = () => {
     
     setCart([]);
     setCurrentPage('success');
+  };
+
+  const exportData = () => {
+    const dataStr = JSON.stringify(orders);
+    navigator.clipboard.writeText(dataStr);
+    alert("Order data copied to clipboard! You can now paste this on another device to sync.");
+  };
+
+  const importData = () => {
+    const input = prompt("Paste the exported Order JSON string here:");
+    if (input) {
+      try {
+        const newOrders = JSON.parse(input);
+        if (Array.isArray(newOrders)) {
+          // Merge logic: avoid duplicates based on ID
+          const merged = [...orders];
+          newOrders.forEach(no => {
+            if (!merged.find(mo => mo.id === no.id)) {
+              merged.push(no);
+            }
+          });
+          // Sort by timestamp (newest first)
+          merged.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+          
+          setOrders(merged);
+          localStorage.setItem('berry_merry_orders', JSON.stringify(merged));
+          alert("Import successful! Orders merged.");
+        }
+      } catch (e) {
+        alert("Invalid data format. Please paste a valid Order JSON.");
+      }
+    }
   };
 
   const clearAllData = () => {
@@ -204,30 +251,46 @@ const App: React.FC = () => {
 
     return (
       <div className="container mx-auto px-4 py-12 max-w-6xl">
-        <div className="flex justify-between items-end mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
           <div>
             <h2 className="text-4xl font-christmas text-red-800 mb-2">North Pole Command Center</h2>
-            <p className="text-slate-500">Real-time order tracking and point analytics.</p>
+            <p className="text-slate-500 italic">Tracking festive magic across the globe.</p>
           </div>
-          <button 
-            onClick={clearAllData}
-            className="bg-slate-200 text-slate-600 px-4 py-2 rounded-lg text-sm hover:bg-red-100 hover:text-red-600 transition-colors"
-          >
-            Reset Data
-          </button>
+          <div className="flex gap-2">
+             <button 
+              onClick={exportData}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-green-700 transition-colors shadow-md"
+              title="Export order data to move to another device"
+            >
+              Export 📤
+            </button>
+            <button 
+              onClick={importData}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors shadow-md"
+              title="Import order data from another device"
+            >
+              Import 📥
+            </button>
+            <button 
+              onClick={clearAllData}
+              className="bg-slate-200 text-slate-600 px-4 py-2 rounded-lg text-sm hover:bg-red-100 hover:text-red-600 transition-colors"
+            >
+              Reset 🧹
+            </button>
+          </div>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-gradient-to-br from-red-600 to-red-800 p-8 rounded-3xl text-white shadow-xl shadow-red-200">
+          <div className="bg-gradient-to-br from-red-600 to-red-800 p-8 rounded-3xl text-white shadow-xl shadow-red-200 border-b-4 border-yellow-500">
             <p className="text-red-100 mb-2 uppercase tracking-wider text-sm font-bold">Total Points Earned</p>
             <p className="text-5xl font-bold tracking-tighter">{totalPoints} <span className="text-2xl font-light">pts</span></p>
           </div>
-          <div className="bg-white p-8 rounded-3xl border border-red-100 shadow-xl shadow-slate-100">
+          <div className="bg-white p-8 rounded-3xl border border-red-100 shadow-xl shadow-slate-100 border-b-4 border-green-600">
             <p className="text-slate-400 mb-2 uppercase tracking-wider text-sm font-bold">Total Orders</p>
             <p className="text-5xl font-bold text-green-700 tracking-tighter">{orders.length}</p>
           </div>
-          <div className="bg-white p-8 rounded-3xl border border-red-100 shadow-xl shadow-slate-100">
+          <div className="bg-white p-8 rounded-3xl border border-red-100 shadow-xl shadow-slate-100 border-b-4 border-yellow-600">
             <p className="text-slate-400 mb-2 uppercase tracking-wider text-sm font-bold">Avg Order Value</p>
             <p className="text-5xl font-bold text-yellow-600 tracking-tighter">{avgOrderValue} <span className="text-2xl font-light">pts</span></p>
           </div>
@@ -235,8 +298,9 @@ const App: React.FC = () => {
 
         {/* Orders Table */}
         <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-red-50">
-          <div className="p-6 border-b border-red-50 bg-red-50/50">
-            <h3 className="text-xl font-bold text-slate-800">Recent Transactions</h3>
+          <div className="p-6 border-b border-red-50 bg-red-50/50 flex justify-between items-center">
+            <h3 className="text-xl font-bold text-slate-800">Master Order Log</h3>
+            <span className="text-xs text-slate-400">Updates in real-time on this device</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
@@ -252,7 +316,7 @@ const App: React.FC = () => {
                 {orders.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="px-6 py-20 text-center text-slate-400">
-                      No orders have been placed yet. The elves are waiting!
+                      No orders detected. The elves are waiting for the first customer!
                     </td>
                   </tr>
                 ) : (
@@ -277,6 +341,11 @@ const App: React.FC = () => {
             </table>
           </div>
         </div>
+        
+        <p className="mt-6 text-center text-slate-400 text-xs">
+          💡 For production usage across multiple devices, connect this app to a cloud database like Firebase. 
+          Currently, use the <b>Export/Import</b> buttons to manually sync order data between devices.
+        </p>
       </div>
     );
   };
@@ -312,6 +381,8 @@ const App: React.FC = () => {
         cartCount={cartCount} 
         onNavigate={setCurrentPage} 
         currentPage={currentPage} 
+        isAdminUnlocked={isAdminUnlocked}
+        onSecretUnlock={handleSecretUnlock}
       />
       
       {floaters.map(floater => (
